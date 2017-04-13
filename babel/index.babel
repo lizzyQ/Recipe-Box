@@ -1,0 +1,283 @@
+let { Button, ButtonGroup, InputGroup, DropdownButton, MenuItem, ButtonToolbar, Glyphicon, Collapse, Well, ListGroup, ListGroupItem, Modal, FormGroup, FormControl, ControlLabel, Accordion, Panel } = ReactBootstrap;
+
+ const colorpalette = [
+  "rgb(212,71,90)",
+  "rgb(183,220,186)",
+  "rgb(111,188,154)",
+  "rgb(248,226,150)",
+  "rgb(123,137,120)"
+ ];
+
+
+class ModalBox extends React.Component {
+  
+   constructor(props){
+     super(props);
+     this.state = {
+       show:false,
+       newRecipe: {},
+       editedRecipe:{},
+     }
+   }
+   
+  addItem(e){
+    let inputTitle = ReactDOM.findDOMNode(this.refs.titleAdd).value;
+    let inputContents = ReactDOM.findDOMNode(this.refs.contentsAdd).value;
+    if(inputTitle == ''){
+         alert('Title is required');
+    }else if(inputContents==''){
+         alert('Ingredient is required')
+    }else{
+        inputContents = inputContents.split(',');
+        this.setState({
+              newRecipe:{
+                user:'newUser',
+                title:inputTitle,
+                ingredients: inputContents 
+              }
+            }, function(){
+              this.props.addNew(this.state.newRecipe);
+            });
+     }
+    e.preventDefault();
+ }
+  
+ editItem(e){
+     let editTitle = ReactDOM.findDOMNode(this.refs.titleEdit).value;
+     let editContents = ReactDOM.findDOMNode(this.refs.contentsEdit).value;
+     if(editTitle == ''){
+             alert('Title is required');
+     }else if(editContents==''){
+             alert('Ingredient is required')
+      }else{
+            editContents = editContents.split(',');
+            this.setState({
+              editedRecipe:{
+                user:'newUser',
+                title:editTitle,
+                ingredients: editContents 
+              }
+            }, function(){
+              this.props.onEdit(this.state.editedRecipe);
+            });
+          }
+    e.preventDefault();
+  }
+  
+render(){
+  let close = () => this.setState({ show: false});
+  return (
+         <div className="modal-container">
+           {this.props.role == "add" ? (
+                  <Button bsStyle="primary"
+                          bsSize="large" 
+                          block 
+                          onClick={() => this.setState({ show: true})} >
+                     Add Recipe
+                  </Button>  
+               ):(
+                 <Button bsStyle="info" 
+                         bsSize="medium" 
+                         onClick={() => this.setState({ show: true})} > 
+                   <Glyphicon glyph="pencil" />
+                </Button>
+           )}
+          <Modal show={this.state.show} 
+                 onHide={close} 
+                 container={this} 
+                 aria-labelledby="contained-modal-title">
+            
+            <Modal.Header closeButton>
+              <Modal.Title id="contained-modal-title">
+                     {this.props.role == "add" ? 'Add Recipe' : 'Edit Recipe'}
+              </Modal.Title>
+            </Modal.Header>
+      
+            <form 
+                  onSubmit={this.props.role == "add" ? 
+                  ( this.addItem.bind(this) ) : 
+                  (this.editItem.bind(this))}>
+                <Modal.Body>               
+                    <FormGroup controlId="rcpTitle">
+                        <ControlLabel>Title</ControlLabel>
+                        {this.props.role == "add" ? (
+                            <FormControl type="text" 
+                                         placeholder="Recipe Name"
+                                         ref= "titleAdd" />
+                          ) : (
+                            <FormControl type="text" 
+                                         defaultValue={this.props.recipeItem.title}
+                                         ref= "titleEdit"/> 
+                          )}
+                   </FormGroup>
+                                    
+                   <FormGroup controlId="rcpContent">
+                        <ControlLabel>Ingredients</ControlLabel>
+                         {this.props.role == "add" ? (
+                            <FormControl componentClass="textarea" 
+                                         placeholder="Enter recipe, Seperate , By, Comma"
+                                         ref= "contentsAdd" />
+                          ) : (
+                            <FormControl type="textarea" 
+                                         defaultValue={this.props.recipeItem.ingredients}
+                                         ref= "contentsEdit"/> 
+                          )}
+                   </FormGroup>
+                    </Modal.Body>
+                    <Modal.Footer>
+                    <Button bsStyle="success" onClick={close} type="submit" block>Done</Button>
+                    </Modal.Footer>
+                </form>                       
+        </Modal>
+      </div>
+    );
+  }
+}
+
+    
+class Recipes extends React.Component { 
+  
+  deleteRcp(idx){
+    this.props.onDelete(idx);
+  }
+  
+  editRcp(item,itemIdx){
+    this.props.onEdit(item,itemIdx);
+  }
+  
+  render() {  
+    let recipes;
+
+    if(this.props.recipes){
+       recipes = this.props.recipes.map((recipe,idx) =>{
+                      let pos = Math.floor(Math.random() * 4);
+                      let color = {background:colorpalette[pos]};
+                      const title = (<h3 className="text-capitalize" style={color}>{recipe.title}</h3>);
+                     
+                      return (
+                        <Panel header={title} eventKey={idx}>
+                                <h5>Ingredients</h5>
+                                <RecipeItem key={idx} recipe={recipe.ingredients} />
+                                <ButtonToolbar>                          
+                                    <Button bsStyle="danger" bsSize="medium" 
+                                              onClick={this.deleteRcp.bind(this,idx)}> 
+                                        <Glyphicon glyph="trash" />
+                                    </Button>
+                                    <ModalBox role="edit" recipeItem={recipe} onEdit={this.editRcp.bind(this,idx)}/> 
+                                </ButtonToolbar>
+                   
+                        </Panel>
+                      );
+        });
+    }
+   
+     return (
+               <Accordion>
+                  {recipes} 
+               </Accordion>  
+     );
+  }
+}
+
+class RecipeItem extends React.Component {
+  render(){
+    let recipeItems;
+    
+    if(this.props.recipe){
+       recipeItems = this.props.recipe.map((item,idx) =>{   
+         return (
+            <ListGroupItem>
+             {item}
+            </ListGroupItem>
+        );
+      });
+    }
+    
+    return(
+      <ListGroup>
+        {recipeItems}
+      </ListGroup>
+    
+    );
+  }
+}
+
+const sampleRecipe = [
+      {
+        user:'admin',
+        title: 'Rose Pizza',
+        ingredients: ['3 cups flour', '1 tsp yeast',' a pintch salt','3 bell pepper']
+      },
+      {
+        user:'admin',
+        title: 'Apple Pie',
+        ingredients: ['5 apples', '1 pie','1 tbsp salt','2 tsp sugar']
+      },
+      {
+        user:'admin',
+        title: 'soup',
+        ingredients: ['water', 'tomato','potato']
+      }
+];
+
+class App extends React.Component {  
+  constructor(props) {
+    super(props);
+    this.state = {
+      recipes:[]
+    }
+  }
+  
+  componentDidMount(){
+      
+    let storedData = localStorage._liz_recipes;
+    /* 
+    no data in local storage, just render samples 
+    and update the samples into local storage
+    */
+    if(JSON.parse(storedData).length == 0){
+      this.setState({recipes:sampleRecipe});
+    }else{
+      this.setState({recipes:JSON.parse(storedData)});                 
+    } 
+    
+  }
+  
+  handleNew(recipe){
+    let recipes = this.state.recipes; 
+    recipes.push(recipe);
+    this.setState({recipes:recipes});
+  }
+  
+  handleDelete(idx){
+   let recipes = this.state.recipes;
+   recipes.splice(idx, 1);
+   this.setState({recipes:recipes});
+  }
+  
+  handleEdit(itemIdx,item){
+     let recipes = this.state.recipes;
+     recipes.splice(itemIdx, 1, item);
+     this.setState({recipes:recipes});
+  }
+  
+  componentDidUpdate(){
+    localStorage.setItem('_liz_recipes', JSON.stringify(this.state.recipes));
+ }
+
+  render() {
+    return (
+            <div>
+                 <h2 className="text-center">Lazy Recipe</h2>
+                 
+                 <Recipes recipes={this.state.recipes} 
+                          onDelete={this.handleDelete.bind(this)} 
+                          onEdit={this.handleEdit.bind(this)} /> 
+                 
+                 <ModalBox role="add" addNew={this.handleNew.bind(this)} />
+           </div>
+    );
+  }
+}
+
+ReactDOM.render(<App />, document.getElementById("recipeBox"));

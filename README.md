@@ -15,6 +15,7 @@ In recipe box, you can add, edit, and delete recipes. It will show you a list of
 ***
 ## Tech Reference 
 
-  React Bootstrap Component
-  HTML5 local storage 
+React Bootstrap Component
+
+HTML5 local storage 
 
